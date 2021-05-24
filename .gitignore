@@ -1,0 +1,12 @@
+# Such that only explicitly unignored files will be kept
+/**
+
+# Meta and build
+!/Makefile
+!/README.md
+!/.gitignore
+!/.clang-format
+
+# Source
+!/src
+!/src/**
