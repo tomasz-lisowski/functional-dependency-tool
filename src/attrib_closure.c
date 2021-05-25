@@ -4,6 +4,7 @@
 #include <stdlib.h>
 
 #include "attrib_closure.h"
+#include "utils.h"
 
 /**
  * @brief Check if a symbol is contained in the closure.
@@ -63,23 +64,62 @@ static bool closure_map_add(attrib_closure_st *closure, symb_id_kt symb_id)
     return true;
 }
 
+void print_closure(attrib_closure_st *closure, attrib_dict_st *attrib_dict)
+{
+    printf("{");
+    for (uint32_t attrib_idx = 0; attrib_idx < closure->attrib_set_count; attrib_idx += 1)
+    {
+        printf("%c", id_to_symb(closure->attrib_set[attrib_idx], attrib_dict));
+        if (attrib_idx + 1 < closure->attrib_set_count)
+        {
+            printf(" ,");
+        }
+    }
+    printf("}+ = ");
+    printf("{");
+    for (uint32_t closure_attr_idx = 0; closure_attr_idx < closure->closure_len; closure_attr_idx += 1)
+    {
+        printf("%c", id_to_symb(closure->closure[closure_attr_idx], attrib_dict));
+        if (closure_attr_idx + 1 < closure->closure_len)
+        {
+            printf(" ,");
+        }
+    }
+    printf("}\n");
+}
+
+void print_closure_arr(attrib_closure_arr_st *closure_arr, attrib_dict_st *attrib_dict)
+{
+    for (uint32_t closure_idx = 0; closure_idx < closure_arr->closures_count; closure_idx += 1)
+    {
+        print_closure(&closure_arr->closures[closure_idx], attrib_dict);
+    }
+}
+
 uint32_t attrib_closure_compute(attrib_closure_st *closure, func_dep_info_st *func_deps_info)
 {
     assert(closure != NULL);
-    assert(closure->attrib_set != NULL);
-    assert(closure->attrib_set_len != 0);
+    assert(closure->attrib_set != NULL &&
+           closure->attrib_set_count != 0); // It is possible to get closure for an empty set.
     assert(closure->closure == NULL);
     assert(closure->closure_len == 0);
     assert(func_deps_info != NULL);
     assert(func_deps_info->func_deps != NULL);
     assert(func_deps_info->attrib_dict != NULL);
 
+    // Empty attribute set means empty closure.
+    if (closure->attrib_set_count == 0)
+    {
+        closure->closure_len = 0;
+        return 0;
+    }
+
     // TODO: Maybe this should be sized `just right' instead of a pre-allocating space for all symbols.
     closure->closure = calloc(sizeof(symb_id_kt), func_deps_info->attrib_dict->symbs_len);
     closure->closure_len = 0;
 
     // The attribute set is contained in its own closure.
-    for (uint32_t attrib_set_idx = 0; attrib_set_idx < closure->attrib_set_len; attrib_set_idx += 1)
+    for (uint32_t attrib_set_idx = 0; attrib_set_idx < closure->attrib_set_count; attrib_set_idx += 1)
     {
         closure_map_add(closure, closure->attrib_set[attrib_set_idx]);
     }

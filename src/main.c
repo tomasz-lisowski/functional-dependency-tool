@@ -1,57 +1,17 @@
+#include <assert.h>
 #include <stdbool.h>
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
-#include <assert.h>
-
+#include "candidate_keys.h"
 #include "common.h"
+#include "utils.h"
 
 #define FUNC_DEP_BUF_SIZE 1024
 #define FUNC_DEPS_MAX 255
 #define SYMBS_MAX 255
-
-/**
- * @brief Lookup an ID of a symbol.
- * @param symb What symbol to lookup.
- * @param attr_dict Dictionary to use for lookup.
- * @return ID of @p symb.
- */
-static symb_id_kt symb_to_id(symb_kt symb, attrib_dict_st *attr_dict)
-{
-    assert(attr_dict != NULL);
-    assert(attr_dict->symbs != NULL);
-
-    for (uint32_t idx = 0; idx < attr_dict->symbs_len; idx += 1)
-    {
-        if (attr_dict->symbs[idx] == symb)
-        {
-            return idx;
-        }
-    }
-    printf("Could not find ID of symbol '%c'.", symb);
-    exit(1);
-}
-
-/**
- * @brief Looks up what symbol has a given ID.
- * @param symb_id ID to lookup.
- * @param attr_dict Dictionary to use for lookup.
- * @return Symbol identified by @p id .
- */
-static symb_kt id_to_symb(symb_id_kt symb_id, attrib_dict_st *attr_dict)
-{
-    assert(attr_dict != NULL);
-    assert(attr_dict->symbs != NULL);
-
-    if (symb_id < attr_dict->symbs_len)
-    {
-        return attr_dict->symbs[symb_id];
-    }
-    printf("Could not find symbol for ID '%u'.", symb_id);
-    exit(1);
-}
 
 /**
  * @brief Read the input file into a buffer,
@@ -80,7 +40,7 @@ static uint32_t input_read(char **buffer_loc, uint32_t *file_len)
  * @param format The desired format of the output (0 = {A} -> {B}, 1 = A-->B, 2 = A -> B, default is verbose).
  * @param func_deps_info What functional dependencies to print.
  */
-static void print_func_deps_formatted(uint8_t format, func_dep_info_st *func_deps_info)
+static void print_func_deps(uint8_t format, func_dep_info_st *func_deps_info)
 {
     assert(func_deps_info != NULL);
     assert(func_deps_info->func_deps != NULL);
@@ -267,14 +227,20 @@ int32_t main(int32_t argc, char *argv[argc])
 
     if (argc == 2 && argv[1][0] == 'b')
     {
-        print_func_deps_formatted(1, &func_deps_info);
+        print_func_deps(1, &func_deps_info);
     }
     else if (argc == 2 && argv[1][0] == 'g')
     {
-        print_func_deps_formatted(0, &func_deps_info);
+        print_func_deps(0, &func_deps_info);
     }
     else
     {
-        print_func_deps_formatted(2, &func_deps_info);
+        print_func_deps(2, &func_deps_info);
     }
+
+    candidate_keys_st keys = {0};
+    attrib_closure_arr_st closures_all = {0};
+    compute_keys(&keys, &closures_all, &func_deps_info, KEY_PRIMARY);
+
+    print_key_arr(&keys, &attrib_dict, false);
 }
