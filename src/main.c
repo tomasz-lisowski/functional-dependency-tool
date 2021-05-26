@@ -7,6 +7,7 @@
 
 #include "candidate_keys.h"
 #include "common.h"
+#include "determinants.h"
 #include "utils.h"
 
 #define FUNC_DEP_BUF_SIZE 1024
@@ -237,10 +238,4 @@ int32_t main(int32_t argc, char *argv[argc])
     {
         print_func_deps(2, &func_deps_info);
     }
-
-    candidate_keys_st keys = {0};
-    attrib_closure_arr_st closures_all = {0};
-    compute_keys(&keys, &closures_all, &func_deps_info, KEY_PRIMARY);
-
-    print_key_arr(&keys, &attrib_dict, false);
 }

@@ -69,7 +69,23 @@ void print_closure(attrib_closure_st *closure, attrib_dict_st *attrib_dict)
     printf("{");
     for (uint32_t attrib_idx = 0; attrib_idx < closure->attrib_set_count; attrib_idx += 1)
     {
-        printf("%c", id_to_symb(closure->attrib_set[attrib_idx], attrib_dict));
+        char symb = 'A';
+        if (attrib_dict == NULL)
+        {
+            if (closure->attrib_set[attrib_idx] > 25)
+            {
+                symb = '?';
+            }
+            else
+            {
+                symb += closure->attrib_set[attrib_idx];
+            }
+        }
+        else
+        {
+            symb = id_to_symb(closure->attrib_set[attrib_idx], attrib_dict);
+        }
+        printf("%c", symb);
         if (attrib_idx + 1 < closure->attrib_set_count)
         {
             printf(" ,");
@@ -79,7 +95,23 @@ void print_closure(attrib_closure_st *closure, attrib_dict_st *attrib_dict)
     printf("{");
     for (uint32_t closure_attr_idx = 0; closure_attr_idx < closure->closure_len; closure_attr_idx += 1)
     {
-        printf("%c", id_to_symb(closure->closure[closure_attr_idx], attrib_dict));
+        char symb = 'A';
+        if (attrib_dict == NULL)
+        {
+            if (closure->closure[closure_attr_idx] > 25)
+            {
+                symb = '?';
+            }
+            else
+            {
+                symb += closure->closure[closure_attr_idx];
+            }
+        }
+        else
+        {
+            symb = id_to_symb(closure->closure[closure_attr_idx], attrib_dict);
+        }
+        printf("%c", symb);
         if (closure_attr_idx + 1 < closure->closure_len)
         {
             printf(" ,");
@@ -99,8 +131,9 @@ void print_closure_arr(attrib_closure_arr_st *closure_arr, attrib_dict_st *attri
 uint32_t attrib_closure_compute(attrib_closure_st *closure, func_dep_info_st *func_deps_info)
 {
     assert(closure != NULL);
-    assert(closure->attrib_set != NULL &&
-           closure->attrib_set_count != 0); // It is possible to get closure for an empty set.
+    assert((closure->attrib_set != NULL) ||
+           (closure->attrib_set == NULL &&
+            closure->attrib_set_count == 0)); // It is possible to get closure for an empty set.
     assert(closure->closure == NULL);
     assert(closure->closure_len == 0);
     assert(func_deps_info != NULL);
@@ -124,7 +157,7 @@ uint32_t attrib_closure_compute(attrib_closure_st *closure, func_dep_info_st *fu
         closure_map_add(closure, closure->attrib_set[attrib_set_idx]);
     }
 
-    // Extra block just so the working vars of the loop are contained in a separate scope.
+    // Find closure.
     {
         bool closure_changed = false;
         func_dep_st *fd;
@@ -153,5 +186,9 @@ uint32_t attrib_closure_compute(attrib_closure_st *closure, func_dep_info_st *fu
             }
         }
     }
+
+    // Sort the closure set.
+    sort(closure->closure, closure->closure_len, sizeof(symb_id_kt), comp_symb_id);
+    flip(closure->closure, closure->closure_len, sizeof(symb_id_kt));
     return 0;
 }

@@ -1,5 +1,4 @@
 #include <assert.h>
-#include <math.h>
 #include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -22,15 +21,7 @@ static bool key_subset_contained(candidate_keys_st *keys, candidate_key_st *key)
         // Only check keys that are shorter than the provided key.
         if (key_tmp->symbs_count > 0 && key->symbs_count > key_tmp->symbs_count)
         {
-            uint32_t key_tmp_idx = 0;
-            for (uint32_t key_idx = 0; key_idx < key->symbs_count; key_idx += 1)
-            {
-                if (key->symbs[key_idx] == key_tmp->symbs[key_tmp_idx])
-                {
-                    key_tmp_idx += 1;
-                }
-            }
-            if (key_tmp->symbs_count == key_tmp_idx)
+            if (subset_sorted(key_tmp->symbs, key->symbs, key_tmp->symbs_count, key->symbs_count, sizeof(symb_id_kt)))
             {
                 return true;
             }

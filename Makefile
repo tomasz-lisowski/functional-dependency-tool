@@ -1,7 +1,6 @@
 CC = gcc
 CFLAGS	+= 	-g -std=c11 -m32 \
-			-Wall -Wextra -Wpedantic \
-			-l m \
+			-Wall -Wextra -Wpedantic
 # CFLAGS += -Werror
 
 SRC_DIR = src
