@@ -194,16 +194,16 @@ uint32_t keys_compute(candidate_keys_st *keys, attrib_closure_arr_st *closures_a
         }
 
         // Save the desired keys at the provided list.
-        keys->key_count += key_types & KEY_PRIMARY ? keys_primary.key_count : 0;
-        keys->key_count += key_types & KEY_SUPER ? keys_primary.key_count : 0;
+        keys->key_count += (key_types & KEY_PRIMARY) > 0 ? keys_primary.key_count : 0;
+        keys->key_count += (key_types & KEY_SUPER) > 0 ? keys_super.key_count : 0;
         keys->keys = malloc(keys->key_count * sizeof(candidate_key_st));
         keys->key_count = 0; // It will be set to the desired value again in if statements below.
-        if (key_types & KEY_PRIMARY)
+        if ((key_types & KEY_PRIMARY) > 0)
         {
             memcpy(&keys->keys[keys->key_count], keys_primary.keys, keys_primary.key_count * sizeof(candidate_key_st));
             keys->key_count += keys_primary.key_count;
         }
-        if (key_types & KEY_SUPER)
+        if ((key_types & KEY_SUPER) > 0)
         {
             memcpy(&keys->keys[keys->key_count], keys_super.keys, keys_super.key_count * sizeof(candidate_key_st));
             keys->key_count += keys_super.key_count;

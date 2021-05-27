@@ -222,10 +222,8 @@ int32_t main(int32_t argc, char *argv[argc])
             key_type = KEY_SUPER;
             break;
         case 'a':
-            key_type = KEY_SUPER | KEY_PRIMARY;
-            break;
         default:
-            key_type = KEY_PRIMARY | KEY_SUPER | KEY_NOT;
+            key_type = KEY_PRIMARY | KEY_SUPER;
             break;
         }
 
