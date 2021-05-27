@@ -88,7 +88,7 @@ void print_closure(attrib_closure_st *closure, attrib_dict_st *attrib_dict)
         printf("%c", symb);
         if (attrib_idx + 1 < closure->attrib_set_count)
         {
-            printf(" ,");
+            printf(",");
         }
     }
     printf("}+ = ");
@@ -114,7 +114,7 @@ void print_closure(attrib_closure_st *closure, attrib_dict_st *attrib_dict)
         printf("%c", symb);
         if (closure_attr_idx + 1 < closure->closure_len)
         {
-            printf(" ,");
+            printf(",");
         }
     }
     printf("}\n");
