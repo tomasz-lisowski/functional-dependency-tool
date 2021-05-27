@@ -35,7 +35,7 @@ typedef struct candidate_keys_s
  * @param key_types What key types to include in the @p keys list.
  * @return 0 on success, >0 on failure.
  */
-uint32_t compute_keys(candidate_keys_st *keys, attrib_closure_arr_st *closures_all, func_dep_info_st *fd_info,
+uint32_t keys_compute(candidate_keys_st *keys, attrib_closure_arr_st *closures_all, func_dep_info_st *fd_info,
                       key_type_et key_types);
 
 void print_key(candidate_key_st *key, attrib_dict_st *attrib_dict, bool type_show);

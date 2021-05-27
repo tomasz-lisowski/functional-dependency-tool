@@ -73,7 +73,7 @@ void print_key_arr(candidate_keys_st *keys, attrib_dict_st *attrib_dict, bool ty
     }
 }
 
-uint32_t compute_keys(candidate_keys_st *keys, attrib_closure_arr_st *closures_all, func_dep_info_st *fd_info,
+uint32_t keys_compute(candidate_keys_st *keys, attrib_closure_arr_st *closures_all, func_dep_info_st *fd_info,
                       key_type_et key_types)
 {
     assert(keys != NULL);

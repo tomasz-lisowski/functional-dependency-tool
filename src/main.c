@@ -8,6 +8,7 @@
 #include "candidate_keys.h"
 #include "common.h"
 #include "determinants.h"
+#include "norm.h"
 #include "utils.h"
 
 #define FUNC_DEP_BUF_SIZE 1024
@@ -34,105 +35,6 @@ static uint32_t input_read(char **buffer_loc, uint32_t *file_len)
     fread(*buffer_loc, 1, *file_len, f);
     fclose(f);
     return 0;
-}
-
-/**
- * @brief Print out all functional dependencies in a list in a specified format.
- * @param format The desired format of the output (0 = {A} -> {B}, 1 = A-->B, 2 = A -> B, default is verbose).
- * @param func_deps_info What functional dependencies to print.
- */
-static void print_func_deps(uint8_t format, func_dep_info_st *func_deps_info)
-{
-    assert(func_deps_info != NULL);
-    assert(func_deps_info->func_deps != NULL);
-    assert(func_deps_info->attrib_dict != NULL);
-
-    attrib_dict_st *attrib_dict = func_deps_info->attrib_dict;
-
-    for (uint32_t fd_idx = 0; fd_idx < func_deps_info->func_deps_count; fd_idx += 1)
-    {
-        func_dep_st *fd = &func_deps_info->func_deps[fd_idx];
-
-        if (format == 0)
-        {
-            printf("{");
-            for (uint32_t lhs_idx = 0; lhs_idx < fd->lhs_len; lhs_idx += 1)
-            {
-                printf("%c", id_to_symb(fd->lhs[lhs_idx], attrib_dict));
-                if (lhs_idx + 1 < fd->lhs_len)
-                {
-                    printf(",");
-                }
-            }
-            printf("} -> {");
-            for (uint32_t rhs_idx = 0; rhs_idx < fd->rhs_len; rhs_idx += 1)
-            {
-                printf("%c", id_to_symb(fd->rhs[rhs_idx], attrib_dict));
-                if (rhs_idx + 1 < fd->rhs_len)
-                {
-                    printf(",");
-                }
-            }
-            printf("},");
-        }
-        else if (format == 1)
-        {
-            for (uint32_t lhs_idx = 0; lhs_idx < fd->lhs_len; lhs_idx += 1)
-            {
-                printf("%c", id_to_symb(fd->lhs[lhs_idx], attrib_dict));
-                if (lhs_idx + 1 < fd->lhs_len)
-                {
-                    printf(",");
-                }
-            }
-            printf("-->");
-            for (uint32_t rhs_idx = 0; rhs_idx < fd->rhs_len; rhs_idx += 1)
-            {
-                printf("%c", id_to_symb(fd->rhs[rhs_idx], attrib_dict));
-                if (rhs_idx + 1 < fd->rhs_len)
-                {
-                    printf(",");
-                }
-            }
-            printf(";");
-        }
-        else if (format == 2)
-        {
-            for (uint32_t lhs_idx = 0; lhs_idx < fd->lhs_len; lhs_idx += 1)
-            {
-                printf("%c", id_to_symb(fd->lhs[lhs_idx], attrib_dict));
-                if (lhs_idx + 1 < fd->lhs_len)
-                {
-                    printf(",");
-                }
-            }
-            printf(" -> ");
-            for (uint32_t rhs_idx = 0; rhs_idx < fd->rhs_len; rhs_idx += 1)
-            {
-                printf("%c", id_to_symb(fd->rhs[rhs_idx], attrib_dict));
-                if (rhs_idx + 1 < fd->rhs_len)
-                {
-                    printf(",");
-                }
-            }
-        }
-        else
-        {
-            printf("FD %u (#LHS: %u, #RHS: %u)\n", fd_idx, fd->lhs_len, fd->rhs_len);
-            for (uint32_t lhs_idx = 0; lhs_idx < fd->lhs_len; lhs_idx += 1)
-            {
-                printf("%c ", id_to_symb(fd->lhs[lhs_idx], attrib_dict));
-            }
-
-            printf("-> ");
-            for (uint32_t rhs_idx = 0; rhs_idx < fd->rhs_len; rhs_idx += 1)
-            {
-                printf("%c ", id_to_symb(fd->rhs[rhs_idx], attrib_dict));
-            }
-            printf("\n\n");
-        }
-        printf("\n");
-    }
 }
 
 /**
@@ -226,16 +128,136 @@ int32_t main(int32_t argc, char *argv[argc])
     input_read(&input_raw, &input_len);
     input_parse(input_raw, input_len, &func_deps_info);
 
-    if (argc == 2 && argv[1][0] == 'b')
+    if (argc == 3 && strcmp(argv[1], "--fd-list") == 0 && strlen(argv[2]) == 1)
     {
-        print_func_deps(1, &func_deps_info);
+        switch (argv[2][0])
+        {
+        case 'r':
+            print_func_deps(0, &func_deps_info);
+            break;
+        case 'c':
+            print_func_deps(1, &func_deps_info);
+            break;
+        case 's':
+            print_func_deps(2, &func_deps_info);
+            break;
+        default:
+            print_func_deps(UINT8_MAX, &func_deps_info);
+            break;
+        }
     }
-    else if (argc == 2 && argv[1][0] == 'g')
+    else if (argc == 3 && strcmp(argv[1], "--det") == 0)
     {
-        print_func_deps(0, &func_deps_info);
+        uint32_t attrib_set_len = strlen(argv[2]);
+
+        candidate_keys_st keys = {0};
+        attrib_closure_arr_st closures_all = {0};
+        keys_compute(&keys, &closures_all, &func_deps_info, 0);
+
+        symb_id_kt det_attrib_set[attrib_set_len];
+        attrib_closure_arr_st det_closures = {.closures = NULL, .closures_count = 0};
+        determinant_info_st det_info = {
+            .attrib_set = det_attrib_set,
+            .attrib_set_count = attrib_set_len,
+            .determinants = &det_closures,
+        };
+
+        for (uint32_t attrib_idx = 0; attrib_idx < attrib_set_len; attrib_idx += 1)
+        {
+            det_attrib_set[attrib_idx] = symb_to_id(argv[2][attrib_idx], &attrib_dict);
+        }
+        determinants_compute(&closures_all, &det_info);
+        print_closure_arr(det_info.determinants, &attrib_dict);
+    }
+    else if (argc == 2 && strcmp(argv[1], "--closure-all") == 0)
+    {
+        candidate_keys_st keys = {0};
+        attrib_closure_arr_st closures_all = {0};
+        keys_compute(&keys, &closures_all, &func_deps_info, 0);
+        print_closure_arr(&closures_all, &attrib_dict);
+    }
+    else if (argc == 3 && strcmp(argv[1], "--closure") == 0)
+    {
+        attrib_closure_st closure = {0};
+        closure.attrib_set_count = strlen(argv[2]);
+        closure.attrib_set = malloc(closure.attrib_set_count * sizeof(symb_id_kt));
+        for (uint32_t attrib_idx = 0; attrib_idx < closure.attrib_set_count; attrib_idx += 1)
+        {
+            closure.attrib_set[attrib_idx] = symb_to_id(argv[2][attrib_idx], &attrib_dict);
+        }
+        attrib_closure_compute(&closure, &func_deps_info);
+        print_closure(&closure, &attrib_dict);
+    }
+    else if (argc == 2 && strcmp(argv[1], "--norm") == 0)
+    {
+        candidate_keys_st keys_primary = {0};
+        attrib_closure_arr_st closures_all = {0};
+        keys_compute(&keys_primary, &closures_all, &func_deps_info, KEY_PRIMARY);
+        if (check_bcnf(&func_deps_info, &keys_primary))
+        {
+            printf("BCNF: yes\n");
+        }
+        else
+        {
+            printf("BCNF: no\n");
+        }
+        if (check_3nf(&func_deps_info, &keys_primary))
+        {
+            printf("3NF: yes\n");
+        }
+        else
+        {
+            printf("3NF: no\n");
+        }
+    }
+    else if (argc == 4 && strcmp(argv[1], "--keys") == 0 && strlen(argv[2]) == 1 && strlen(argv[3]) == 1)
+    {
+        key_type_et key_type = 0;
+        switch (argv[2][0])
+        {
+        case 'p':
+            key_type = KEY_PRIMARY;
+            break;
+        case 's':
+            key_type = KEY_SUPER;
+            break;
+        case 'a':
+            key_type = KEY_SUPER | KEY_PRIMARY;
+            break;
+        default:
+            key_type = KEY_PRIMARY | KEY_SUPER | KEY_NOT;
+            break;
+        }
+
+        candidate_keys_st keys = {0};
+        attrib_closure_arr_st closures_all = {0};
+        keys_compute(&keys, &closures_all, &func_deps_info, key_type);
+
+        switch (argv[3][0])
+        {
+        case 'y':
+            print_key_arr(&keys, &attrib_dict, 1);
+            break;
+        case 'n':
+        default:
+            print_key_arr(&keys, &attrib_dict, 0);
+            break;
+        }
     }
     else
     {
-        print_func_deps(2, &func_deps_info);
+        printf("Usage: func_deps_tool <--fd-list format | --det attrib_set | --closure attrib_set | --closure-all | "
+               "--keys types show_type | --norm>\n\n"
+               "'--fd-list format': Print out the functional dependencies in some format. 's' for 'A,B -> C,D', 'c' "
+               "for 'A,B-->C,D;', 'r' for '{A,B} -> {C,D},'.\n\n"
+               "'--det attrib_set': Compute determinant of a set of attributes specified like e.g. 'ABCD' (these need "
+               "to be sorted).\n\n"
+               "'--closure attrib_set': Compute the closure of a set of attributes like e.g. 'ABCD' (these need to be "
+               "sorted).\n\n"
+               "'--closure-all': List all possible closures.\n\n"
+               "'--keys types show_type': Compute keys where type can be 'p' for primary, 's' for super keys, 'a' for "
+               "both primary and super, else all keys and non-keys get listed. 'show_type' can be set to 'y' (yes) or "
+               "'n' (no) to tell program if the key type should be included in the listing.\n\n"
+               "'--norm': Checks if the provided FDs are in BCNF and 3NF.\n\n");
     }
 }

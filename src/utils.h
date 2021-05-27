@@ -10,6 +10,15 @@ enum comp_flag_e
     COMP_GREATER = 1 << 1, // 1=greater and 0=smaller
 };
 
+void print_func_dep(uint8_t format, func_dep_st *func_dep, attrib_dict_st *attrib_dict);
+
+/**
+ * @brief Print out all functional dependencies in a list in a specified format.
+ * @param format The desired format of the output (0 = {A} -> {B}, 1 = A-->B, 2 = A -> B, default is verbose).
+ * @param func_deps_info What functional dependencies to print.
+ */
+void print_func_deps(uint8_t format, func_dep_info_st *func_deps_info);
+
 /**
  * @brief Lookup an ID of a symbol.
  * @param symb What symbol to lookup.
