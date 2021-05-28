@@ -11,3 +11,7 @@
 # Source
 !/src
 !/src/**
+
+# Example
+!/example
+!/example/**

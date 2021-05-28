@@ -244,7 +244,8 @@ int32_t main(int32_t argc, char *argv[argc])
     }
     else
     {
-        printf("Usage: func_deps_tool <--fd-list format | --det attrib_set | --closure attrib_set | --closure-all | "
+        printf("NOTE: The input file must always be located at './fd.txt'."
+               "Usage: func_deps_tool <--fd-list format | --det attrib_set | --closure attrib_set | --closure-all | "
                "--keys types show_type | --norm>\n\n"
                "'--fd-list format': Print out the functional dependencies in some format. 's' for 'A,B -> C,D', 'c' "
                "for 'A,B-->C,D;', 'r' for '{A,B} -> {C,D},'.\n\n"

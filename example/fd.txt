@@ -1,0 +1,7 @@
+ABCDEFG
+E -> C, G
+A -> F
+A, C, D -> B, E, G
+A -> G
+B, D, F -> A, C
+B -> A, E
