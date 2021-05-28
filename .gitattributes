@@ -1,0 +1,3 @@
+# Correctly categorize C files
+*.h linguist-language=C
+*.c linguist-language=C

@@ -5,6 +5,7 @@
 !/Makefile
 !/README.md
 !/.gitignore
+!/.gitattributes
 !/.clang-format
 
 # Source
