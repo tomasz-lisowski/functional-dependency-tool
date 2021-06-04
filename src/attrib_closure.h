@@ -2,7 +2,7 @@
 
 #include <stdint.h>
 
-#include "common.h"
+#include "func_dep.h"
 
 typedef struct attrib_closure_s
 {
@@ -27,5 +27,17 @@ typedef struct attrib_closure_arr_s
  */
 uint32_t attrib_closure_compute(attrib_closure_st *closure, func_dep_info_st *func_deps_info);
 
+/**
+ * @brief Handle printing of the `attrib_closure_st' struct.
+ * @param closure The closure what will be printed.
+ * @param attrib_dict The dictionary which will be used to translate symbol IDs to symbols for each attribute.
+ */
 void print_closure(attrib_closure_st *closure, attrib_dict_st *attrib_dict);
+
+/**
+ * @brief Handle printing of the `attrib_closure_arr_st' struct.
+ * @note This function uses `print_closure' to print each closure.
+ * @param closure_arr The closure array which will be printed.
+ * @param attrib_dict The dictionary which will be used to translate symbol IDs to symbols for each attribute.
+ */
 void print_closure_arr(attrib_closure_arr_st *closure_arr, attrib_dict_st *attrib_dict);

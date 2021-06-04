@@ -5,9 +5,9 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "candidate_keys.h"
-#include "common.h"
-#include "determinants.h"
+#include "determinant.h"
+#include "func_dep.h"
+#include "key.h"
 #include "norm.h"
 #include "utils.h"
 
@@ -21,12 +21,13 @@
  * @param file_len Where to write the length of the file that was read.
  * @return 0 on success, > 0 on failure.
  */
-static uint32_t input_read(char **buffer_loc, uint32_t *file_len)
+static uint32_t inputf_read(char **buffer_loc, uint32_t *file_len)
 {
     assert(buffer_loc != NULL);
     assert(file_len != NULL);
 
-    FILE *f = fopen("fd.txt", "rb");
+    FILE *f;
+    fopen_s(&f, "fd.txt", "rb");
     fseek(f, 0, SEEK_END);
     *file_len = ftell(f);
     fseek(f, 0, SEEK_SET);
@@ -44,7 +45,7 @@ static uint32_t input_read(char **buffer_loc, uint32_t *file_len)
  * @param input_len How long @p input_raw is.
  * @param func_deps_info Where to save the parsed data.
  */
-static void input_parse(char *input_raw, uint32_t input_len, func_dep_info_st *func_deps_info)
+static void inputf_parse(char *input_raw, uint32_t input_len, func_dep_info_st *func_deps_info)
 {
     assert(input_raw != NULL);
     assert(func_deps_info != NULL);
@@ -110,6 +111,18 @@ static void input_parse(char *input_raw, uint32_t input_len, func_dep_info_st *f
     }
 }
 
+/**
+ * @brief Handle all operations needed to read and parse the input file.
+ * @param input_raw Where to write the pointer to the buffer containing file contents.
+ * @param input_len Where to write the number of bytes that have been read from the file.
+ * @param func_deps_info Where to write the parsed functional dependencies.
+ */
+static void inputf_handle(char **input_raw, uint32_t *input_len, func_dep_info_st *func_deps_info)
+{
+    inputf_read(input_raw, input_len);
+    inputf_parse(*input_raw, *input_len, func_deps_info);
+}
+
 int32_t main(int32_t argc, char *argv[argc])
 {
     // State
@@ -125,11 +138,10 @@ int32_t main(int32_t argc, char *argv[argc])
 
     char *input_raw;
     uint32_t input_len = 0;
-    input_read(&input_raw, &input_len);
-    input_parse(input_raw, input_len, &func_deps_info);
 
     if (argc == 3 && strcmp(argv[1], "--fd-list") == 0 && strlen(argv[2]) == 1)
     {
+        inputf_handle(&input_raw, &input_len, &func_deps_info);
         switch (argv[2][0])
         {
         case 'r':
@@ -148,9 +160,10 @@ int32_t main(int32_t argc, char *argv[argc])
     }
     else if (argc == 3 && strcmp(argv[1], "--det") == 0)
     {
+        inputf_handle(&input_raw, &input_len, &func_deps_info);
         uint32_t attrib_set_len = strlen(argv[2]);
 
-        candidate_keys_st keys = {0};
+        key_arr_st keys = {0};
         attrib_closure_arr_st closures_all = {0};
         keys_compute(&keys, &closures_all, &func_deps_info, 0);
 
@@ -171,13 +184,15 @@ int32_t main(int32_t argc, char *argv[argc])
     }
     else if (argc == 2 && strcmp(argv[1], "--closure-all") == 0)
     {
-        candidate_keys_st keys = {0};
+        inputf_handle(&input_raw, &input_len, &func_deps_info);
+        key_arr_st keys = {0};
         attrib_closure_arr_st closures_all = {0};
         keys_compute(&keys, &closures_all, &func_deps_info, 0);
         print_closure_arr(&closures_all, &attrib_dict);
     }
     else if (argc == 3 && strcmp(argv[1], "--closure") == 0)
     {
+        inputf_handle(&input_raw, &input_len, &func_deps_info);
         attrib_closure_st closure = {0};
         closure.attrib_set_count = strlen(argv[2]);
         closure.attrib_set = malloc(closure.attrib_set_count * sizeof(symb_id_kt));
@@ -190,7 +205,8 @@ int32_t main(int32_t argc, char *argv[argc])
     }
     else if (argc == 2 && strcmp(argv[1], "--norm") == 0)
     {
-        candidate_keys_st keys_primary = {0};
+        inputf_handle(&input_raw, &input_len, &func_deps_info);
+        key_arr_st keys_primary = {0};
         attrib_closure_arr_st closures_all = {0};
         keys_compute(&keys_primary, &closures_all, &func_deps_info, KEY_PRIMARY);
         if (check_bcnf(&func_deps_info, &keys_primary))
@@ -212,6 +228,7 @@ int32_t main(int32_t argc, char *argv[argc])
     }
     else if (argc == 4 && strcmp(argv[1], "--keys") == 0 && strlen(argv[2]) == 1 && strlen(argv[3]) == 1)
     {
+        inputf_handle(&input_raw, &input_len, &func_deps_info);
         key_type_et key_type = 0;
         switch (argv[2][0])
         {
@@ -227,7 +244,7 @@ int32_t main(int32_t argc, char *argv[argc])
             break;
         }
 
-        candidate_keys_st keys = {0};
+        key_arr_st keys = {0};
         attrib_closure_arr_st closures_all = {0};
         keys_compute(&keys, &closures_all, &func_deps_info, key_type);
 

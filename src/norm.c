@@ -4,7 +4,7 @@
 #include "norm.h"
 #include "utils.h"
 
-static bool check_fd_bcnf(func_dep_st *fd, candidate_keys_st *keys_primary)
+static bool check_fd_bcnf(func_dep_st *fd, key_arr_st *keys_primary)
 {
     // If RHS is subset of LHS.
     if (subset_sorted(fd->rhs, fd->lhs, fd->rhs_len, fd->lhs_len, sizeof(symb_id_kt)))
@@ -16,13 +16,13 @@ static bool check_fd_bcnf(func_dep_st *fd, candidate_keys_st *keys_primary)
     bool keys_subset_lhs = false;
     for (uint32_t key_idx = 0; key_idx < keys_primary->key_count; key_idx += 1)
     {
-        candidate_key_st *key = &keys_primary->keys[key_idx];
+        key_st *key = &keys_primary->keys[key_idx];
         keys_subset_lhs |= subset_sorted(key->symbs, fd->lhs, key->symbs_count, fd->lhs_len, sizeof(symb_id_kt));
     }
     return keys_subset_lhs;
 }
 
-static bool check_fd_3nf(func_dep_st *fd, candidate_keys_st *keys_primary)
+static bool check_fd_3nf(func_dep_st *fd, key_arr_st *keys_primary)
 {
     if (check_fd_bcnf(fd, keys_primary))
     {
@@ -36,7 +36,7 @@ static bool check_fd_3nf(func_dep_st *fd, candidate_keys_st *keys_primary)
         {
             break;
         }
-        candidate_key_st *key = &keys_primary->keys[key_idx];
+        key_st *key = &keys_primary->keys[key_idx];
         for (uint32_t key_symb_idx = 0; key_symb_idx < key->symbs_count; key_symb_idx += 1)
         {
             // Check if each key attribute is a subset of RHS.
@@ -52,7 +52,7 @@ static bool check_fd_3nf(func_dep_st *fd, candidate_keys_st *keys_primary)
     return key_attrib_found;
 }
 
-bool check_bcnf(func_dep_info_st *func_deps_info, candidate_keys_st *keys_primary)
+bool check_bcnf(func_dep_info_st *func_deps_info, key_arr_st *keys_primary)
 {
     for (uint32_t fd_idx = 0; fd_idx < func_deps_info->func_deps_count; fd_idx += 1)
     {
@@ -69,7 +69,7 @@ bool check_bcnf(func_dep_info_st *func_deps_info, candidate_keys_st *keys_primar
     return true;
 }
 
-bool check_3nf(func_dep_info_st *func_deps_info, candidate_keys_st *keys_primary)
+bool check_3nf(func_dep_info_st *func_deps_info, key_arr_st *keys_primary)
 {
     // Check if RHS contains a key attribute.
     for (uint32_t fd_idx = 0; fd_idx < func_deps_info->func_deps_count; fd_idx += 1)

@@ -4,7 +4,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "candidate_keys.h"
+#include "key.h"
 #include "utils.h"
 
 /**
@@ -13,11 +13,11 @@
  * @param key Key where the subset should be found.
  * @return `true' if @p keys contains a key which is a subset of @p key, else `false'.
  */
-static bool key_subset_contained(candidate_keys_st *keys, candidate_key_st *key)
+static bool key_subset_contained(key_arr_st *keys, key_st *key)
 {
     for (uint32_t keys_idx = 0; keys_idx < keys->key_count; keys_idx += 1)
     {
-        candidate_key_st *key_tmp = &keys->keys[keys_idx];
+        key_st *key_tmp = &keys->keys[keys_idx];
         // Only check keys that are shorter than the provided key.
         if (key_tmp->symbs_count > 0 && key->symbs_count > key_tmp->symbs_count)
         {
@@ -30,7 +30,7 @@ static bool key_subset_contained(candidate_keys_st *keys, candidate_key_st *key)
     return false;
 }
 
-void print_key(candidate_key_st *key, attrib_dict_st *attrib_dict, bool type_show)
+void print_key(key_st *key, attrib_dict_st *attrib_dict, bool type_show)
 {
     printf("{");
     for (uint32_t symb_idx = 0; symb_idx < key->symbs_count; symb_idx += 1)
@@ -65,7 +65,7 @@ void print_key(candidate_key_st *key, attrib_dict_st *attrib_dict, bool type_sho
     printf("\n");
 }
 
-void print_key_arr(candidate_keys_st *keys, attrib_dict_st *attrib_dict, bool type_show)
+void print_key_arr(key_arr_st *keys, attrib_dict_st *attrib_dict, bool type_show)
 {
     for (uint32_t key_idx = 0; key_idx < keys->key_count; key_idx += 1)
     {
@@ -73,7 +73,7 @@ void print_key_arr(candidate_keys_st *keys, attrib_dict_st *attrib_dict, bool ty
     }
 }
 
-uint32_t keys_compute(candidate_keys_st *keys, attrib_closure_arr_st *closures_all, func_dep_info_st *fd_info,
+uint32_t keys_compute(key_arr_st *keys, attrib_closure_arr_st *closures_all, func_dep_info_st *fd_info,
                       key_type_et key_types)
 {
     assert(keys != NULL);
@@ -149,13 +149,13 @@ uint32_t keys_compute(candidate_keys_st *keys, attrib_closure_arr_st *closures_a
     // Determine what key type each generated set (using the above) is.
     {
         // Temporary key stores which can later be used to quickly copy memory chunks into final keys list.
-        candidate_keys_st keys_primary = {0};
+        key_arr_st keys_primary = {0};
         keys_primary.key_count = 0;
-        keys_primary.keys = calloc(sizeof(candidate_key_st), closures_all->closures_count);
-        candidate_keys_st keys_super = {0};
+        keys_primary.keys = calloc(sizeof(key_st), closures_all->closures_count);
+        key_arr_st keys_super = {0};
         keys_super.key_count = 0;
-        keys_super.keys = calloc(sizeof(candidate_key_st), closures_all->closures_count);
-        candidate_key_st key_tmp = {0};
+        keys_super.keys = calloc(sizeof(key_st), closures_all->closures_count);
+        key_st key_tmp = {0};
         key_tmp.symbs = calloc(sizeof(symb_id_kt), fd_info->attrib_dict->symbs_len);
         key_tmp.symbs_count = 0;
         key_tmp.key_type = KEY_NOT;
@@ -170,7 +170,7 @@ uint32_t keys_compute(candidate_keys_st *keys, attrib_closure_arr_st *closures_a
 
             // Final info about the key being analyzed.
             key_type_et key_final_type = KEY_NOT;
-            candidate_key_st *key_final = NULL;
+            key_st *key_final = NULL;
 
             if (closure->closure_len == fd_info->attrib_dict->symbs_len &&
                 key_subset_contained(&keys_primary, &key_tmp))
@@ -196,16 +196,16 @@ uint32_t keys_compute(candidate_keys_st *keys, attrib_closure_arr_st *closures_a
         // Save the desired keys at the provided list.
         keys->key_count += (key_types & KEY_PRIMARY) > 0 ? keys_primary.key_count : 0;
         keys->key_count += (key_types & KEY_SUPER) > 0 ? keys_super.key_count : 0;
-        keys->keys = malloc(keys->key_count * sizeof(candidate_key_st));
+        keys->keys = malloc(keys->key_count * sizeof(key_st));
         keys->key_count = 0; // It will be set to the desired value again in if statements below.
         if ((key_types & KEY_PRIMARY) > 0)
         {
-            memcpy(&keys->keys[keys->key_count], keys_primary.keys, keys_primary.key_count * sizeof(candidate_key_st));
+            memcpy(&keys->keys[keys->key_count], keys_primary.keys, keys_primary.key_count * sizeof(key_st));
             keys->key_count += keys_primary.key_count;
         }
         if ((key_types & KEY_SUPER) > 0)
         {
-            memcpy(&keys->keys[keys->key_count], keys_super.keys, keys_super.key_count * sizeof(candidate_key_st));
+            memcpy(&keys->keys[keys->key_count], keys_super.keys, keys_super.key_count * sizeof(key_st));
             keys->key_count += keys_super.key_count;
         }
 

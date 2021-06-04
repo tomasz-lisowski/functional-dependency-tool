@@ -3,7 +3,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "determinants.h"
+#include "determinant.h"
 #include "utils.h"
 
 uint32_t determinants_compute(attrib_closure_arr_st *closures_all, determinant_info_st *det_info)
@@ -19,6 +19,7 @@ uint32_t determinants_compute(attrib_closure_arr_st *closures_all, determinant_i
 
     if (det_info->attrib_set_count == 0 || closures_all->closures_count == 0)
     {
+        // This is already ensured with the asserts above.
         // det_info->determinants->closures_count = 0;
         return 0;
     }
@@ -26,6 +27,7 @@ uint32_t determinants_compute(attrib_closure_arr_st *closures_all, determinant_i
     attrib_closure_arr_st det_info_tmp = {0};
     det_info_tmp.closures = calloc(closures_all->closures_count, sizeof(attrib_closure_st));
     det_info_tmp.closures_count = 0;
+
     // Find all closures that contain at least the requested attributes and which are minimal.
     for (uint32_t closure_idx = 0; closure_idx < closures_all->closures_count; closure_idx += 1)
     {

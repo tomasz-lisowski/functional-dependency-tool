@@ -4,7 +4,7 @@
 #include <stdint.h>
 
 #include "attrib_closure.h"
-#include "common.h"
+#include "func_dep.h"
 
 typedef enum key_type_e
 {
@@ -13,18 +13,18 @@ typedef enum key_type_e
     KEY_SUPER = 1 << 2,   // Is a superset of a primary key.
 } key_type_et;
 
-typedef struct candidate_key_s
+typedef struct key_s
 {
     symb_id_kt *symbs;
     uint32_t symbs_count; // Number of symbol IDs in symbs list.
     key_type_et key_type;
-} candidate_key_st;
+} key_st;
 
-typedef struct candidate_keys_s
+typedef struct key_arr_s
 {
-    candidate_key_st *keys;
+    key_st *keys;
     uint32_t key_count;
-} candidate_keys_st;
+} key_arr_st;
 
 /**
  * @brief Compute a selected set of keys for a set of functional depenendencies.
@@ -35,8 +35,22 @@ typedef struct candidate_keys_s
  * @param key_types What key types to include in the @p keys list.
  * @return 0 on success, >0 on failure.
  */
-uint32_t keys_compute(candidate_keys_st *keys, attrib_closure_arr_st *closures_all, func_dep_info_st *fd_info,
+uint32_t keys_compute(key_arr_st *keys, attrib_closure_arr_st *closures_all, func_dep_info_st *fd_info,
                       key_type_et key_types);
 
-void print_key(candidate_key_st *key, attrib_dict_st *attrib_dict, bool type_show);
-void print_key_arr(candidate_keys_st *keys, attrib_dict_st *attrib_dict, bool type_show);
+/**
+ * @brief Print out a `key_st' struct.
+ * @param key The key that will be printed.
+ * @param attrib_dict Dictionary used to map symbol IDs to symbols.
+ * @param type_show If TRUE, will show the type of the key e.g. PRIMARY or SUPER. If FALSE no type key gets printed.
+ */
+void print_key(key_st *key, attrib_dict_st *attrib_dict, bool type_show);
+
+/**
+ * @brief Print out the
+ * @note
+ * @param  keys
+ * @param  *attrib_dict
+ * @param  type_show
+ */
+void print_key_arr(key_arr_st *keys, attrib_dict_st *attrib_dict, bool type_show);
